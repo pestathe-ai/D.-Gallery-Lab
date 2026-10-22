@@ -17,5 +17,7 @@ grep -n "permission\|label" "$M"
 MA=$(find android/app/src/main -name MainActivity.kt | head -1)
 cp tool/android/MainActivity.kt "$MA"
 echo "MainActivity: $MA"
+# Icona Dom Studio (adattiva + a tema)
+cp -r tool/icon/res/. android/app/src/main/res/
 
 flutter pub get

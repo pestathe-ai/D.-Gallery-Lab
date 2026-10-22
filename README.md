@@ -10,6 +10,9 @@ App Android per mettere ordine nella galleria. Tutto avviene sul telefono, offli
 - **Archivio Anno / Mese** con qualità media del mese e ordinamento "migliori prima".
 - Eliminazione solo dopo conferma: su Android 11+ le foto vanno nel **cestino** (recuperabili ~30 giorni).
 
+## Novità v0.3.1
+- Nuova icona Dom Studio (con versione a un colore per le icone a tema di Android).
+
 ## Novità v0.3
 - **Archivia in cartelle**: sposta davvero le foto in `Pictures/Archivio/<anno>/<anno>-<mese> <Nome>/` (Android 11+). Nulla viene cancellato; scegli da quali cartelle prendere le foto. Una conferma di sistema ogni 300 foto, oppure nessuna attivando "Gestione contenuti multimediali".
 
