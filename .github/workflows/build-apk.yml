@@ -31,7 +31,7 @@ jobs:
         run: |
           set -o pipefail
           if ! flutter analyze --no-fatal-infos --no-fatal-warnings 2>&1 | tee x.log; then
-            grep -n -E 'error' x.log | tail -40 | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}' > err.txt
+            { grep -n -E 'error' x.log || true; tail -15 x.log; } | tail -40 | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}' > err.txt
             echo "::error title=analyze::$(cat err.txt)"; exit 1
           fi
       - name: Test
