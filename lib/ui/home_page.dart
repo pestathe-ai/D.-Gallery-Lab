@@ -127,7 +127,7 @@ class _Progress extends StatelessWidget {
                 ? 'Preparo l\'elenco delle foto'
                 : '${state.done} di ${state.total} foto'),
             const SizedBox(height: 8),
-            const Text('Tieni l\'app aperta.',
+            const Text('Le foto già analizzate vengono saltate.',
                 style: TextStyle(fontSize: 12)),
             const SizedBox(height: 16),
             TextButton(onPressed: state.cancel, child: const Text('Interrompi')),

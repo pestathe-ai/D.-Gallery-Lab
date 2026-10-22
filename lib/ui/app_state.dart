@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:photo_manager/photo_manager.dart';
 
 import '../analysis/grouping.dart';
+import '../services/analysis_cache.dart';
 import '../services/scanner.dart';
 
 enum ScanStatus { idle, noPermission, scanning, done }
@@ -78,6 +79,11 @@ class AppState extends ChangeNotifier {
     );
     status = ScanStatus.done;
     notifyListeners();
+  }
+
+  /// All'avvio: se c'è un'analisi salvata, la ricarica subito.
+  Future<void> resumeIfSaved() async {
+    if (await AnalysisCache.exists()) await scan();
   }
 
   void cancel() => _cancel = true;

@@ -7,6 +7,7 @@ import 'package:photo_manager/photo_manager.dart';
 
 import '../analysis/grouping.dart';
 import '../analysis/metrics.dart';
+import 'analysis_cache.dart';
 
 class AnalyzedPhoto {
   AnalyzedPhoto(this.asset, this.hash, this.quality);
@@ -55,7 +56,8 @@ class Scanner {
     return ps.hasAccess;
   }
 
-  /// Analizza tutte le foto. [onProgress] riceve (fatte, totali).
+  /// Analizza tutte le foto, riusando l'analisi salvata per quelle
+  /// non modificate. [onProgress] riceve (fatte, totali).
   static Future<ScanResult> scan({
     required void Function(int done, int total) onProgress,
     bool Function()? isCancelled,
@@ -67,34 +69,64 @@ class Scanner {
     if (paths.isEmpty) return ScanResult([], []);
     final all = paths.first;
     final total = await all.assetCountAsync;
+    final old = await AnalysisCache.load();
+    final fresh = AnalysisCache();
     final photos = <AnalyzedPhoto>[];
-    const pageSize = 100;
+    const pageSize = 200;
     var done = 0;
+    var newSinceSave = 0;
+
+    Future<void> saveQuietly() async {
+      try {
+        // conserva anche le voci vecchie non ancora riviste (scansione interrotta)
+        final merged = AnalysisCache({...old.entries, ...fresh.entries});
+        await merged.save();
+      } catch (_) {}
+    }
 
     for (var page = 0; page * pageSize < total; page++) {
       final assets = await all.getAssetListPaged(page: page, size: pageSize);
       for (final a in assets) {
         if (isCancelled?.call() ?? false) {
+          await saveQuietly();
           return _finish(photos);
         }
-        try {
-          final bytes = await a.thumbnailDataWithSize(
-            const ThumbnailSize.square(thumbSize),
-            quality: 90,
-          );
-          if (bytes != null) {
-            final gray = await _decodeGray(bytes);
-            if (gray != null) {
-              photos.add(AnalyzedPhoto(a, dHash(gray), analyzeQuality(gray)));
+        final modified = a.modifiedDateSecond ?? 0;
+        final hit = old.lookup(a.id, modified);
+        if (hit != null) {
+          fresh.entries[a.id] = hit;
+          photos.add(AnalyzedPhoto(a, hit.hash, hit.quality));
+        } else {
+          try {
+            final bytes = await a.thumbnailDataWithSize(
+              const ThumbnailSize.square(thumbSize),
+              quality: 90,
+            );
+            if (bytes != null) {
+              final gray = await _decodeGray(bytes);
+              if (gray != null) {
+                final p = AnalyzedPhoto(a, dHash(gray), analyzeQuality(gray));
+                photos.add(p);
+                fresh.entries[a.id] = CachedEntry(modified, p.hash, p.quality);
+                newSinceSave++;
+              }
             }
+          } catch (_) {
+            // Foto illeggibile: la saltiamo.
           }
-        } catch (_) {
-          // Foto illeggibile: la saltiamo.
+          if (newSinceSave >= 300) {
+            newSinceSave = 0;
+            await saveQuietly();
+          }
         }
         done++;
-        if (done % 5 == 0 || done == total) onProgress(done, total);
+        if (done % 10 == 0 || done == total) onProgress(done, total);
       }
     }
+    // Scansione completa: si salvano solo le foto ancora presenti.
+    try {
+      await fresh.save();
+    } catch (_) {}
     return _finish(photos);
   }
 

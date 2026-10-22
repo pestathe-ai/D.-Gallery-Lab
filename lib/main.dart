@@ -15,6 +15,12 @@ class GalleryLabApp extends StatefulWidget {
 class _GalleryLabAppState extends State<GalleryLabApp> {
   final state = AppState();
 
+  @override
+  void initState() {
+    super.initState();
+    state.resumeIfSaved();
+  }
+
   ThemeData _theme(Brightness b) => ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
