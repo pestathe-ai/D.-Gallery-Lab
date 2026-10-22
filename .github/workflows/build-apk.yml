@@ -24,7 +24,7 @@ jobs:
         run: |
           set -o pipefail
           if ! ./tool/setup_platforms.sh 2>&1 | tee x.log; then
-            grep -n -i -E 'error|failed|exception|because' x.log | tail -40 | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}' > err.txt
+            { grep -n -i -E 'error|failed|exception|because' x.log || true; tail -15 x.log; } | tail -40 | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}' > err.txt
             echo "::error title=setup::$(cat err.txt)"; exit 1
           fi
       - name: Analyze
@@ -38,14 +38,14 @@ jobs:
         run: |
           set -o pipefail
           if ! flutter test --reporter expanded 2>&1 | tee x.log; then
-            grep -n -i -E 'error|failed|exception|Expected|Actual|Which|\.dart [0-9]+:[0-9]+' x.log | tail -40 | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}' > err.txt
+            { grep -n -i -E 'error|failed|exception|Expected|Actual|Which|\.dart [0-9]+:[0-9]+' x.log || true; tail -15 x.log; } | tail -40 | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}' > err.txt
             echo "::error title=test::$(cat err.txt)"; exit 1
           fi
       - name: Build
         run: |
           set -o pipefail
           if ! flutter build apk --release --split-per-abi 2>&1 | tee x.log; then
-            grep -n -i -E 'error|what went wrong|failed|exception|\.dart:[0-9]+' x.log | tail -40 | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}' > err.txt
+            { grep -n -i -E 'error|what went wrong|failed|exception|\.dart:[0-9]+' x.log || true; tail -15 x.log; } | tail -40 | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}' > err.txt
             echo "::error title=build::$(cat err.txt)"; exit 1
           fi
       - name: Sign
