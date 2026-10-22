@@ -13,4 +13,9 @@ PERMS='    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" 
 sed -i "s#<application#${PERMS}\n    <application#" "$M"
 sed -i 's#android:label="[^"]*"#android:label="D. Gallery Lab"#' "$M"
 grep -n "permission\|label" "$M"
+# Activity con il canale per archiviare in cartelle
+MA=$(find android/app/src/main -name MainActivity.kt | head -1)
+cp tool/android/MainActivity.kt "$MA"
+echo "MainActivity: $MA"
+
 flutter pub get

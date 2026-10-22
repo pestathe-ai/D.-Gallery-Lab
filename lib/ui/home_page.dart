@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../analysis/grouping.dart';
 import 'app_state.dart';
+import 'archive_page.dart';
 import 'groups_page.dart';
 import 'quality_page.dart';
 import 'timeline_page.dart';
@@ -233,6 +234,12 @@ class _Dashboard extends StatelessWidget {
           title: 'Archivio Anno / Mese',
           subtitle: 'Sfoglia per periodo, migliori in evidenza',
           onTap: () => _go(context, TimelinePage(state: state)),
+        ),
+        _Tile(
+          icon: Icons.drive_file_move_outline,
+          title: 'Archivia in cartelle',
+          subtitle: 'Sposta in Archivio / Anno / Mese',
+          onTap: () => _go(context, ArchivePage(state: state)),
         ),
       ],
     );

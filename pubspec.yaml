@@ -1,7 +1,7 @@
 name: d_gallery_lab
 description: Analizza la galleria, trova duplicati, scatti simili e foto venute male.
 publish_to: 'none'
-version: 0.2.0+2
+version: 0.3.0+3
 
 environment:
   sdk: ">=3.5.0 <4.0.0"
