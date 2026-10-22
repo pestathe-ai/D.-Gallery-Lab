@@ -10,6 +10,12 @@ App Android per mettere ordine nella galleria. Tutto avviene sul telefono, offli
 - **Archivio Anno / Mese** con qualità media del mese e ordinamento "migliori prima".
 - Eliminazione solo dopo conferma: su Android 11+ le foto vanno nel **cestino** (recuperabili ~30 giorni).
 
+## Novità v0.4
+- **Probabili meme**: legge il testo (offline) nelle immagini ricevute da WhatsApp, Telegram, download… e propone quelle con molto testo. Da rivedere, mai cancellate in automatico.
+- **Doppioni WhatsApp**: copie tra WhatsApp e Galleria; tiene l'originale a qualità più alta.
+- **File nascosti**: miniature della Galleria, copie delle foto inviate su WhatsApp, stati già visti. Richiede il permesso "Accesso a tutti i file" (Android 11+).
+- Stile Dom Studio (colori, carattere Sora) e firma "un'app Dom Studio".
+
 ## Novità v0.3.1
 - Nuova icona Dom Studio (con versione a un colore per le icone a tema di Android).
 
@@ -20,6 +26,8 @@ App Android per mettere ordine nella galleria. Tutto avviene sul telefono, offli
 - L'analisi viene salvata: alle aperture successive si ricarica subito e vengono analizzate solo le foto nuove o modificate.
 
 ## Limiti
+- Il riconoscimento dei meme è un'approssimazione: possono comparire anche ricevute o documenti fotografati.
+- Il carattere Sora si scarica la prima volta che l'app è online; offline usa il carattere di sistema.
 - Il punteggio si basa su nitidezza ed esposizione, non su un'intelligenza artificiale "estetica".
 - L'archiviazione in cartelle richiede Android 11 o successivo.
 - La prima analisi, con molte migliaia di foto, richiede qualche minuto.

@@ -6,9 +6,16 @@ import 'widgets.dart';
 
 /// Gruppi di duplicati o di foto simili, con la migliore già scelta.
 class GroupsPage extends StatefulWidget {
-  const GroupsPage({super.key, required this.state, required this.kind});
+  const GroupsPage(
+      {super.key, required this.state, required this.kind, this.whatsapp = false});
   final AppState state;
   final GroupKind kind;
+
+  /// Solo i doppioni con una copia WhatsApp (tiene l'originale).
+  final bool whatsapp;
+
+  List<PhotoGroup> load() =>
+      whatsapp ? state.whatsappGroups : state.groups(kind);
 
   @override
   State<GroupsPage> createState() => _GroupsPageState();
@@ -27,7 +34,7 @@ class _GroupsPageState extends State<GroupsPage> {
     selected
       ..clear()
       ..addAll([
-        for (final g in widget.state.groups(widget.kind)) ...g.ids.skip(1),
+        for (final g in widget.load()) ...g.ids.skip(1),
       ]);
   }
 
@@ -37,11 +44,15 @@ class _GroupsPageState extends State<GroupsPage> {
     return ListenableBuilder(
       listenable: widget.state,
       builder: (context, _) {
-        final groups = widget.state.groups(widget.kind);
+        final groups = widget.load();
         selected.removeWhere((id) => widget.state.photo(id) == null);
         return Scaffold(
           appBar: AppBar(
-            title: Text(isDup ? 'Duplicati' : 'Foto simili'),
+            title: Text(widget.whatsapp
+                ? 'Doppioni WhatsApp'
+                : isDup
+                    ? 'Duplicati'
+                    : 'Foto simili'),
             actions: [
               PopupMenuButton<String>(
                 onSelected: (v) => setState(() {
@@ -73,9 +84,13 @@ class _GroupsPageState extends State<GroupsPage> {
                       return Padding(
                         padding: const EdgeInsets.fromLTRB(4, 4, 4, 12),
                         child: Text(
-                          '${groups.length} gruppi. La stella indica lo scatto '
-                          'migliore. Tocca una foto per tenerla o scartarla, '
-                          'tieni premuto per ingrandirla.',
+                          widget.whatsapp
+                              ? '${groups.length} gruppi. La stella è l\'originale '
+                                  '(fuori da WhatsApp, qualità più alta): le copie '
+                                  'WhatsApp sono già selezionate.'
+                              : '${groups.length} gruppi. La stella indica lo scatto '
+                                  'migliore. Tocca una foto per tenerla o scartarla, '
+                                  'tieni premuto per ingrandirla.',
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       );

@@ -6,6 +6,8 @@ import android.content.ContentValues
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.os.Environment
+import android.provider.Settings
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
@@ -36,6 +38,32 @@ class MainActivity : FlutterActivity() {
             .setMethodCallHandler { call, result ->
                 when (call.method) {
                     "sdkInt" -> result.success(Build.VERSION.SDK_INT)
+
+                    "hasAllFiles" -> result.success(
+                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+                            Environment.isExternalStorageManager()
+                    )
+
+                    "requestAllFiles" -> {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            try {
+                                startActivity(
+                                    Intent(
+                                        Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                                        Uri.parse("package:$packageName")
+                                    )
+                                )
+                            } catch (e: Exception) {
+                                startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+                            }
+                        }
+                        result.success(null)
+                    }
+
+                    "storageRoot" -> {
+                        @Suppress("DEPRECATION")
+                        result.success(Environment.getExternalStorageDirectory().absolutePath)
+                    }
 
                     "requestWrite" -> {
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {

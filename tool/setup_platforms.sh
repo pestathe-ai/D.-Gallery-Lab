@@ -9,7 +9,8 @@ PERMS='    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" 
     <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />\
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />\
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />\
-    <uses-permission android:name="android.permission.MANAGE_MEDIA" />'
+    <uses-permission android:name="android.permission.MANAGE_MEDIA" />\
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />'
 sed -i "s#<application#${PERMS}\n    <application#" "$M"
 sed -i 's#android:label="[^"]*"#android:label="D. Gallery Lab"#' "$M"
 grep -n "permission\|label" "$M"

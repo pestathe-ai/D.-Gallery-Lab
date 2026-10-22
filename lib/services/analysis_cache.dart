@@ -7,11 +7,18 @@ import '../analysis/metrics.dart';
 
 /// Risultato salvato per una foto: valido finché la foto non viene modificata.
 class CachedEntry {
-  const CachedEntry(this.modified, this.hash, this.quality);
+  const CachedEntry(this.modified, this.hash, this.quality,
+      [this.textChars = -1]);
 
   final int modified;
   final int hash;
   final QualityReport quality;
+
+  /// Caratteri di testo letti nell'immagine (-1 = non ancora letti).
+  final int textChars;
+
+  CachedEntry withText(int chars) =>
+      CachedEntry(modified, hash, quality, chars);
 
   List<Object> toJson() => [
         modified,
@@ -20,6 +27,7 @@ class CachedEntry {
         quality.brightness,
         quality.darkFraction,
         quality.brightFraction,
+        textChars,
       ];
 
   static CachedEntry? fromJson(Object? o) {
@@ -35,6 +43,7 @@ class CachedEntry {
         darkFraction: (o[4] as num).toDouble(),
         brightFraction: (o[5] as num).toDouble(),
       ),
+      o.length > 6 ? (o[6] as num).toInt() : -1,
     );
   }
 }

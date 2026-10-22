@@ -1,23 +1,42 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:photo_manager/photo_manager.dart';
 
 import '../analysis/grouping.dart';
 import '../analysis/metrics.dart';
+import '../analysis/source.dart';
 import 'analysis_cache.dart';
 
 class AnalyzedPhoto {
-  AnalyzedPhoto(this.asset, this.hash, this.quality);
+  AnalyzedPhoto(this.asset, this.hash, this.quality, [this.textChars = -1]);
 
   final AssetEntity asset;
   final int hash;
   final QualityReport quality;
 
+  /// Caratteri di testo letti (-1 = non letti).
+  int textChars;
+
   String get id => asset.id;
   DateTime get taken => asset.createDateTime;
+  String? get folder => asset.relativePath;
+  String get title => asset.title ?? '';
+
+  bool get whatsapp => isWhatsApp(folder, title);
+  bool get received => isReceived(folder, title);
+  bool get screenshot => isScreenshot(folder, title);
+  bool get probableMeme => isProbableMeme(
+        received: received,
+        textChars: textChars,
+        width: asset.width,
+        height: asset.height,
+      );
 
   PhotoInfo toInfo() => PhotoInfo(
         id: asset.id,
@@ -59,9 +78,10 @@ class Scanner {
   /// Analizza tutte le foto, riusando l'analisi salvata per quelle
   /// non modificate. [onProgress] riceve (fatte, totali).
   static Future<ScanResult> scan({
-    required void Function(int done, int total) onProgress,
+    required void Function(int done, int total, String phase) onProgress,
     bool Function()? isCancelled,
   }) async {
+    const phase = 'Analisi delle immagini';
     final paths = await PhotoManager.getAssetPathList(
       type: RequestType.image,
       onlyAll: true,
@@ -95,7 +115,7 @@ class Scanner {
         final hit = old.lookup(a.id, modified);
         if (hit != null) {
           fresh.entries[a.id] = hit;
-          photos.add(AnalyzedPhoto(a, hit.hash, hit.quality));
+          photos.add(AnalyzedPhoto(a, hit.hash, hit.quality, hit.textChars));
         } else {
           try {
             final bytes = await a.thumbnailDataWithSize(
@@ -120,14 +140,68 @@ class Scanner {
           }
         }
         done++;
-        if (done % 10 == 0 || done == total) onProgress(done, total);
+        if (done % 10 == 0 || done == total) onProgress(done, total, phase);
       }
     }
     // Scansione completa: si salvano solo le foto ancora presenti.
     try {
       await fresh.save();
     } catch (_) {}
+
+    // Seconda fase: leggo il testo nelle immagini ricevute (per i meme).
+    await _readText(photos, fresh, onProgress, isCancelled);
     return _finish(photos);
+  }
+
+  static Future<void> _readText(
+    List<AnalyzedPhoto> photos,
+    AnalysisCache cache,
+    void Function(int done, int total, String phase) onProgress,
+    bool Function()? isCancelled,
+  ) async {
+    final todo =
+        photos.where((p) => p.received && p.textChars < 0).toList();
+    if (todo.isEmpty) return;
+    const phase = 'Cerco i meme';
+    final recognizer = TextRecognizer(script: TextRecognitionScript.latin);
+    final tmp = File('${(await getTemporaryDirectory()).path}/ocr.jpg');
+    var done = 0, sinceSave = 0;
+    try {
+      for (final p in todo) {
+        if (isCancelled?.call() ?? false) break;
+        try {
+          final bytes = await p.asset.thumbnailDataWithSize(
+              const ThumbnailSize(720, 720),
+              quality: 90);
+          if (bytes != null) {
+            await tmp.writeAsBytes(bytes, flush: true);
+            final r =
+                await recognizer.processImage(InputImage.fromFilePath(tmp.path));
+            p.textChars = r.text.replaceAll(RegExp(r'\s'), '').length;
+            final e = cache.entries[p.id];
+            if (e != null) cache.entries[p.id] = e.withText(p.textChars);
+            sinceSave++;
+          }
+        } catch (_) {
+          p.textChars = 0;
+        }
+        done++;
+        if (done % 5 == 0 || done == todo.length) {
+          onProgress(done, todo.length, phase);
+        }
+        if (sinceSave >= 100) {
+          sinceSave = 0;
+          try {
+            await cache.save();
+          } catch (_) {}
+        }
+      }
+    } finally {
+      await recognizer.close();
+      try {
+        await cache.save();
+      } catch (_) {}
+    }
   }
 
   static Future<ScanResult> _finish(List<AnalyzedPhoto> photos) async {

@@ -107,7 +107,8 @@ class Archiver {
         final a = await AssetEntity.fromId(id);
         if (a == null) continue;
         cache.entries[id] =
-            CachedEntry(a.modifiedDateSecond ?? 0, old.hash, old.quality);
+            CachedEntry(
+            a.modifiedDateSecond ?? 0, old.hash, old.quality, old.textChars);
       }
       await cache.save();
     } catch (_) {}

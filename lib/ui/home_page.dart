@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../analysis/grouping.dart';
 import 'app_state.dart';
 import 'archive_page.dart';
+import 'hidden_page.dart';
+import 'memes_page.dart';
 import 'groups_page.dart';
 import 'quality_page.dart';
 import 'timeline_page.dart';
@@ -55,7 +57,7 @@ class _Intro extends StatelessWidget {
         const SizedBox(height: 24),
         Icon(Icons.auto_awesome_mosaic_outlined, size: 72, color: cs.primary),
         const SizedBox(height: 20),
-        Text('Metti ordine nella galleria',
+        Text('Metti ordine nelle immagini',
             style: t.headlineSmall, textAlign: TextAlign.center),
         const SizedBox(height: 12),
         Text(
@@ -72,6 +74,8 @@ class _Intro extends StatelessWidget {
           icon: const Icon(Icons.search),
           label: const Text('Analizza galleria'),
         ),
+        const SizedBox(height: 24),
+        const _Signature(),
       ],
     );
   }
@@ -118,7 +122,7 @@ class _Progress extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Analisi in corso…',
+            Text(state.phase.isEmpty ? 'Analisi in corso…' : '${state.phase}…',
                 style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 20),
             LinearProgressIndicator(value: frac, minHeight: 8,
@@ -126,7 +130,7 @@ class _Progress extends StatelessWidget {
             const SizedBox(height: 12),
             Text(state.total == 0
                 ? 'Preparo l\'elenco delle foto'
-                : '${state.done} di ${state.total} foto'),
+                : '${state.done} di ${state.total} immagini'),
             const SizedBox(height: 8),
             const Text('Le foto già analizzate vengono saltate.',
                 style: TextStyle(fontSize: 12)),
@@ -205,6 +209,15 @@ class _Dashboard extends StatelessWidget {
               _go(context, GroupsPage(state: state, kind: GroupKind.duplicate)),
         ),
         _Tile(
+          icon: Icons.forum_outlined,
+          title: 'Doppioni WhatsApp',
+          subtitle: '${state.whatsappGroups.length} gruppi · tengo l\'originale',
+          onTap: () => _go(
+              context,
+              GroupsPage(
+                  state: state, kind: GroupKind.duplicate, whatsapp: true)),
+        ),
+        _Tile(
           icon: Icons.burst_mode_outlined,
           title: 'Scatti simili',
           subtitle: '${simGroups.length} raffiche · scelgo il migliore',
@@ -230,6 +243,18 @@ class _Dashboard extends StatelessWidget {
           onTap: () => _go(context, QualityPage(state: state, initial: 2)),
         ),
         _Tile(
+          icon: Icons.sentiment_very_satisfied_outlined,
+          title: 'Probabili meme',
+          subtitle: '${state.memes.length} immagini ricevute con molto testo',
+          onTap: () => _go(context, MemesPage(state: state)),
+        ),
+        _Tile(
+          icon: Icons.visibility_off_outlined,
+          title: 'File nascosti',
+          subtitle: 'Miniature, copie WhatsApp inviate, stati visti',
+          onTap: () => _go(context, const HiddenPage()),
+        ),
+        _Tile(
           icon: Icons.calendar_month_outlined,
           title: 'Archivio Anno / Mese',
           subtitle: 'Sfoglia per periodo, migliori in evidenza',
@@ -241,6 +266,7 @@ class _Dashboard extends StatelessWidget {
           subtitle: 'Sposta in Archivio / Anno / Mese',
           onTap: () => _go(context, ArchivePage(state: state)),
         ),
+        const _Signature(),
       ],
     );
   }
@@ -274,4 +300,29 @@ class _Tile extends StatelessWidget {
           onTap: onTap,
         ),
       );
+}
+
+/// Firma Dom Studio in fondo alla schermata principale.
+class _Signature extends StatelessWidget {
+  const _Signature();
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      child: Text.rich(
+        TextSpan(
+          style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13),
+          children: const [
+            TextSpan(text: "un'app "),
+            TextSpan(
+                text: 'Dom Studio',
+                style: TextStyle(fontWeight: FontWeight.w800)),
+          ],
+        ),
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
 }

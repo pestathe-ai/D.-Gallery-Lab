@@ -11,6 +11,7 @@ class AppState extends ChangeNotifier {
   ScanStatus status = ScanStatus.idle;
   int done = 0;
   int total = 0;
+  String phase = '';
   ScanResult? result;
   bool _cancel = false;
 
@@ -51,6 +52,32 @@ class AppState extends ChangeNotifier {
       photos.where((p) => p.quality.isOverexposed).toList()
         ..sort((a, b) => b.quality.brightness.compareTo(a.quality.brightness));
 
+  List<AnalyzedPhoto> get memes =>
+      photos.where((p) => p.probableMeme).toList()
+        ..sort((a, b) => b.textChars.compareTo(a.textChars));
+
+  int get receivedToRead =>
+      photos.where((p) => p.received && p.textChars < 0).length;
+
+  /// Duplicati in cui almeno una copia viene da WhatsApp.
+  /// Prima l'originale: fuori da WhatsApp e con più pixel.
+  List<PhotoGroup> get whatsappGroups {
+    final out = <PhotoGroup>[];
+    for (final g in groups(GroupKind.duplicate)) {
+      final ps = [for (final id in g.ids) result!.byId[id]!];
+      if (!ps.any((p) => p.whatsapp)) continue;
+      ps.sort((a, b) {
+        if (a.whatsapp != b.whatsapp) return a.whatsapp ? 1 : -1;
+        final pa = a.asset.width * a.asset.height;
+        final pb = b.asset.width * b.asset.height;
+        if (pa != pb) return pb.compareTo(pa);
+        return a.taken.compareTo(b.taken);
+      });
+      out.add(PhotoGroup(g.kind, [for (final p in ps) p.id], ps.first.id));
+    }
+    return out;
+  }
+
   void setBlurThreshold(double v) {
     blurThreshold = v;
     notifyListeners();
@@ -70,9 +97,10 @@ class AppState extends ChangeNotifier {
     removed.clear();
     notifyListeners();
     result = await Scanner.scan(
-      onProgress: (d, t) {
+      onProgress: (d, t, ph) {
         done = d;
         total = t;
+        phase = ph;
         notifyListeners();
       },
       isCancelled: () => _cancel,
