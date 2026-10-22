@@ -20,5 +20,6 @@ cp tool/android/MainActivity.kt "$MA"
 echo "MainActivity: $MA"
 # Icona Dom Studio (adattiva + a tema)
 cp -r tool/icon/res/. android/app/src/main/res/
+cp tool/android/proguard-rules.pro android/app/proguard-rules.pro
 
 flutter pub get
